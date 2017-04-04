@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+	<!-- 透视图的扩展,透视图其实就是界面的布局,不同的透视图，包含不同的视图 -->
+	<extension point="org.eclipse.ui.perspectives">
+		<perspective
+			id="com.newair.studioplugin.perspectives.MybatisPerspective"
+			class="com.newair.studioplugin.perspectives.MybatisPerspective"
+			name="Mybatis"
+			icon="icons/releng_gears.gif">
+		</perspective>
+	</extension>
+   
+	<!-- 菜单、菜单项和工具栏按钮的扩展 -->
+	<extension point="org.eclipse.ui.actionSets">
+		<actionSet
+			id="mybatisPlugin.actionset"
+			label="Mybatis"
+			visible="true">
+			<menu
+				id="org.eclipse.ui.actionsets.menu"
+				label="Mybatis">
+				<groupMarker name="group" />
+			</menu>
+			<action
+				id="com.newair.studioplugin.actions.OpenMybatisEditAction"
+				class="com.newair.studioplugin.actions.OpenMapFileMenuAction"
+				label="&amp;Mybatis Editor"
+				menubarPath="org.eclipse.ui.actionSets.menu/group"
+				icon="icons/open_map2.gif"
+				tooltip="Hello, Eclipse world">
+			</action>
+		</actionSet>
+	</extension>
+	
+	<!-- 右键弹出菜单扩展 -->
+	<extension
+		id="studioplugin.navigator.popupMenu"
+		name="studioplugin.navigator.popupMenu"
+		point="org.eclipse.ui.popupMenus">
+		<objectContribution
+			id="studioplugin.contribution"
+			objectClass="org.eclipse.core.resources.IFolder">
+			<action
+				id="studioplugin.CreateMapperFileAction"
+				class="com.newair.studioplugin.actions.CreateMapperFileAction"
+				label="新建一般映射"
+				menubarPath="group.new"
+				icon="icons/etool16/new_wiz.gif"
+				enablesFor="1">
+			</action>
+		</objectContribution>
+		<objectContribution
+			id="studioplugin.contribution"
+			objectClass="org.eclipse.core.resources.IFolder">
+			<action
+				id="studioplugin.CreateTableMapperFileAction"
+				class="com.newair.studioplugin.actions.CreateTableMapperFileAction"
+				label="新建单表映射"
+				menubarPath="group.new"
+				icon="icons/etool16/new_wiz.gif"
+				enablesFor="1">
+			</action>
+		</objectContribution>
+	</extension>
+
+	<!-- 视图的扩展  -->
+	<extension point="org.eclipse.ui.views">
+		<category name="Mybatis"
+			id="com.newair.studioplugin.views">
+		</category>
+		<view name="Mybatis Config"
+			id="com.newair.studioplugin.views.MybatisView"
+			class="com.newair.studioplugin.views.MybatisView"
+			category="org.eclipse.ui"
+			icon="icons/obj16/generic_elements.gif">
+		</view>
+		<view name="Mybatis Explorer"
+			id="com.newair.studioplugin.views.NavigatorView"
+			class="com.newair.studioplugin.views.navigator.NavigatorView"
+			category="org.eclipse.ui"
+			icon="icons/obj16/generic_elements.gif">
+		</view>
+	</extension>
+   
+	<!-- 编辑器扩展 -->
+	<extension point="org.eclipse.ui.editors">
+		<editor
+			class="com.newair.studioplugin.editors.MybatisEditor"
+			contributorClass="org.eclipse.ui.editors.text.TextEditorActionContributor"
+			default="true"
+			icon="icons/open_map2.gif"
+			id="com.newair.studioplugin.editors.MybatisEditor"
+			name="Mybatis Editor">
+		</editor>
+	</extension>
+   
+	<!-- Navigator扩展 -->
+	<extension point="org.eclipse.ui.navigator.viewer">
+		<viewer viewerId="com.newair.studioplugin.views.NavigatorView" />
+		<viewerContentBinding viewerId="com.newair.studioplugin.views.NavigatorView">
+			<includes>
+				<contentExtension pattern="com.newair.studioplugin.views.navigator.directorycontent" />
+				<!-- <contentExtension pattern="org.eclipse.ui.navigator.resourceContent"/>这个才能展示所有工程目录文件 -->
+				<!-- <contentExtension pattern="org.eclipse.ui.navigator.resources.*" />以“.”开始的资源已经被过滤, LinkHelper功能 -->
+				<contentExtension pattern="com.newair.studioplugin.views.navigator.Filter" />
+				<contentExtension pattern="com.newair.studioplugin.views.navigator.LinkHelper" />
+                <contentExtension pattern="org.eclipse.ui.navigator.resourceContent" />  
+                <contentExtension pattern="org.eclipse.ui.navigator.resources.filters.*" />  
+                <contentExtension pattern="org.eclipse.ui.examples.navigator.filters.*" />  
+			</includes>
+		</viewerContentBinding>
+		<viewerActionBinding viewerId="com.newair.studioplugin.views.NavigatorView">
+	      	<includes>
+	      		<actionExtension pattern="org.eclipse.ui.navigator.resources.*" />
+	      	</includes>
+		</viewerActionBinding>
+		<dragAssistant viewerId="com.newair.studioplugin.views.NavigatorView"
+			class="org.eclipse.ui.navigator.resources.ResourceDragAdapterAssistant">
+		</dragAssistant>
+	</extension>
+
+	<!-- Navigator内容扩展 -->
+	<extension point="org.eclipse.ui.navigator.navigatorContent">
+		<!-- 树型内容   -->
+		<navigatorContent name="Mybatis Explorer"
+			activeByDefault="true"
+			id="com.newair.studioplugin.views.navigator.directorycontent"
+		    labelProvider="com.newair.studioplugin.views.navigator.TitleLabelProvider"
+		    contentProvider="com.newair.studioplugin.views.navigator.DirectoryContentProvider">
+         	<enablement>
+		    	<or>         
+		        	<adapt type="org.eclipse.core.resources.IProject" /> 
+		            <instanceof value="org.eclipse.core.resources.IResource" /> 
+		    	</or>
+         	</enablement>
+	        <commonSorter id="com.newair.studioplugin.views.navigator.ResourceExtensionSorter"
+	              class="com.newair.studioplugin.views.navigator.ResourceExtensionSorter">
+	        	<parentExpression>
+	           		<or>           
+			            <instanceof value="org.eclipse.core.resources.IResource" /> 
+			    	</or>
+				</parentExpression>
+	        </commonSorter>
+			<triggerPoints>
+				<instanceof value="org.eclipse.core.resources.IProject"></instanceof>
+				<instanceof value="org.eclipse.core.resources.IFile"></instanceof>
+			</triggerPoints>
+	      	<possibleChildren>
+		        <instanceof value="org.eclipse.core.resources.IFile"></instanceof>
+	        </possibleChildren>
+		    <!-- 菜单中添加向导  "
+			<commonWizard
+			    type="new"
+			    wizardId="com.newair.studioplugin.wizards.new.folder">
+				<enablement>
+					<or>
+						<adapt type="org.eclipse.core.resources.IFile" />
+						<adapt type="org.eclipse.core.resources.IFolder" />
+						<adapt type="org.eclipse.core.resources.IProject" />
+						<adapt type="org.eclipse.core.resources.IWorkspaceRoot" />
+					</or>
+				</enablement>
+			</commonWizard> -->
+			<commonWizard
+			    type="new"
+			    wizardId="org.eclipse.jdt.ui.wizards.JavaProjectWizard">
+				<enablement>
+					<instanceof value="org.eclipse.core.resources.IResource">
+					</instanceof>
+				</enablement>
+			</commonWizard>
+			<actionProvider
+			     id="com.newair.studioplugin.actions.NavigatorActionProvider"
+			     class="com.newair.studioplugin.actions.NavigatorActionProvider">
+			     <enablement>
+				    <or>
+				       <instanceof value="org.eclipse.core.resources.IFile" />
+				       <instanceof value="org.eclipse.core.resources.IProject" />
+				    </or>
+			     </enablement>
+			</actionProvider>
+		</navigatorContent>
+		<!-- 资源过滤器  -->
+		<commonFilter
+	        activeByDefault="true"
+	        description="MyFilter"
+	        id="com.newair.studioplugin.views.navigator.Filter"
+	        class="com.newair.studioplugin.views.navigator.Filter"
+	        name="com.newair.studioplugin.views.navigator.Filter">
+	    </commonFilter>
+	</extension>
+
+	<!-- LinkHelper扩展 -->
+	<extension point="org.eclipse.ui.navigator.linkHelper">
+		<linkHelper
+			id="com.newair.studioplugin.views.navigator.LinkHelper"
+			class="com.newair.studioplugin.views.navigator.LinkHelper">
+			<editorInputEnablement>
+				<instanceof value="org.eclipse.ui.IFileEditorInput" />
+			</editorInputEnablement>
+			<selectionEnablement>
+				<instanceof value="org.eclipse.core.resources.IFile" />
+			</selectionEnablement>
+		</linkHelper>
+	</extension>
+</plugin>

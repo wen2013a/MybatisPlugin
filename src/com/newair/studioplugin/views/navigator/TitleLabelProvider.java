@@ -1,0 +1,233 @@
+package com.newair.studioplugin.views.navigator;
+
+import org.eclipse.core.resources.IResource;
+import org.eclipse.jface.resource.ColorDescriptor;
+import org.eclipse.jface.resource.FontDescriptor;
+import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.resource.LocalResourceManager;
+import org.eclipse.jface.resource.ResourceManager;
+import org.eclipse.jface.viewers.DecoratingLabelProvider;
+import org.eclipse.jface.viewers.ILabelProvider;
+import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.LabelProviderChangedEvent;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.RGB;
+import org.eclipse.ui.IEditorRegistry;
+import org.eclipse.ui.IMemento;
+import org.eclipse.ui.IPropertyListener;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.internal.util.Util;
+import org.eclipse.ui.model.IWorkbenchAdapter;
+import org.eclipse.ui.model.IWorkbenchAdapter2;
+import org.eclipse.ui.model.WorkbenchLabelProvider;
+import org.eclipse.ui.navigator.ICommonContentExtensionSite;
+import org.eclipse.ui.navigator.ICommonLabelProvider;
+
+import com.newair.studioplugin.StudioActivator;
+import com.newair.studioplugin.StudioConst;
+import com.newair.studioplugin.StudioUtil;
+
+public class TitleLabelProvider extends LabelProvider implements ICommonLabelProvider {
+
+	private ResourceManager resourceManager;
+
+	/**
+	 * Returns a workbench label provider that is hooked up to the decorator
+	 * mechanism.
+	 * 
+	 * @return a new <code>DecoratingLabelProvider</code> which wraps a <code>
+     *   new <code>WorkbenchLabelProvider</code>
+	 */
+	public static ILabelProvider getDecoratingWorkbenchLabelProvider() {
+		return new DecoratingLabelProvider(new WorkbenchLabelProvider(), PlatformUI.getWorkbench().getDecoratorManager().getLabelDecorator());
+	}
+
+	/**
+	 * Creates a new workbench label provider.
+	 */
+	public TitleLabelProvider() {
+		PlatformUI.getWorkbench().getEditorRegistry().addPropertyListener(editorRegistryListener);
+	}
+
+	public void dispose() {
+		PlatformUI.getWorkbench().getEditorRegistry().removePropertyListener(editorRegistryListener);
+		if (resourceManager != null)
+			resourceManager.dispose();
+		resourceManager = null;
+		super.dispose();
+	}
+
+	public final Image getImage(Object element) {
+		Image image = null;
+		if (StudioUtil.isMapperFile(element)) {
+			image = StudioActivator.getDefault().getImage(StudioConst.ICON_MAP_FILE);
+			if (image != null) {
+				return image;
+			}
+		} else if (StudioUtil.isMapperFolder(element)) {
+			image = StudioActivator.getDefault().getImage(StudioConst.ICON_MAP_FOLDER);
+			if (image != null) {
+				return image;
+			}
+		}
+		// obtain the base image by querying the element
+		IWorkbenchAdapter adapter = getAdapter(element);
+		if (adapter == null) {
+			return image;
+		}
+		ImageDescriptor descriptor = adapter.getImageDescriptor(element);
+		if (descriptor == null) {
+			return image;
+		}
+		// add any annotations to the image descriptor
+		descriptor = decorateImage(descriptor, element);
+		image = (Image)getResourceManager().get(descriptor);
+		return image;
+	}
+
+	public final String getText(Object element) {
+		// query the element for its label
+		IWorkbenchAdapter adapter = getAdapter(element);
+		if (adapter == null) {
+			return "";
+		}
+		String label = adapter.getLabel(element);
+		// return the decorated label
+		return decorateText(label, element);
+	}
+
+	public Color getForeground(Object element) {
+		return getColor(element, true);
+	}
+
+	public Color getBackground(Object element) {
+		return getColor(element, false);
+	}
+
+	public Font getFont(Object element) {
+		IWorkbenchAdapter2 adapter = getAdapter2(element);
+		if (adapter == null) {
+			return null;
+		}
+		FontData descriptor = adapter.getFont(element);
+		if (descriptor == null) {
+			return null;
+		}
+		return (Font)getResourceManager().get(FontDescriptor.createFrom(descriptor));
+	}
+
+	public void init(ICommonContentExtensionSite aConfig) {
+	}
+
+	public String getDescription(Object anElement) {
+		if (anElement instanceof IResource) {
+			return ((IResource)anElement).getFullPath().makeRelative().toString();
+		}
+		return null;
+	}
+
+	public void restoreState(IMemento aMemento) {
+	}
+
+	public void saveState(IMemento aMemento) {
+	}
+
+	/**
+	 * Returns an image descriptor that is based on the given descriptor, but
+	 * decorated with additional information relating to the state of the
+	 * provided object.
+	 * 
+	 * Subclasses may reimplement this method to decorate an object's image.
+	 * 
+	 * @param input
+	 *            The base image to decorate.
+	 * @param element
+	 *            The element used to look up decorations.
+	 * @return the resuling ImageDescriptor.
+	 * @see org.eclipse.jface.resource.CompositeImageDescriptor
+	 */
+	protected ImageDescriptor decorateImage(ImageDescriptor input, Object element) {
+		return input;
+	}
+
+	/**
+	 * Returns a label that is based on the given label, but decorated with
+	 * additional information relating to the state of the provided object.
+	 * 
+	 * Subclasses may implement this method to decorate an object's label.
+	 * 
+	 * @param input
+	 *            The base text to decorate.
+	 * @param element
+	 *            The element used to look up decorations.
+	 * @return the resulting text
+	 */
+	protected String decorateText(String input, Object element) {
+		return input;
+	}
+
+	/**
+	 * Returns the implementation of IWorkbenchAdapter for the given object.
+	 * 
+	 * @param o
+	 *            the object to look up.
+	 * @return IWorkbenchAdapter or<code>null</code> if the adapter is not
+	 *         defined or the object is not adaptable.
+	 */
+	protected final IWorkbenchAdapter getAdapter(Object o) {
+		return (IWorkbenchAdapter)Util.getAdapter(o, IWorkbenchAdapter.class);
+	}
+
+	/**
+	 * Returns the implementation of IWorkbenchAdapter2 for the given object.
+	 * 
+	 * @param o
+	 *            the object to look up.
+	 * @return IWorkbenchAdapter2 or<code>null</code> if the adapter is not
+	 *         defined or the object is not adaptable.
+	 */
+	protected final IWorkbenchAdapter2 getAdapter2(Object o) {
+		return (IWorkbenchAdapter2)Util.getAdapter(o, IWorkbenchAdapter2.class);
+	}
+
+	private Color getColor(Object element, boolean forground) {
+		IWorkbenchAdapter2 adapter = getAdapter2(element);
+		if (adapter == null) {
+			return null;
+		}
+		RGB descriptor = forground ? adapter.getForeground(element) : adapter.getBackground(element);
+		if (descriptor == null) {
+			return null;
+		}
+		return (Color)getResourceManager().get(ColorDescriptor.createFrom(descriptor));
+	}
+
+	/**
+	 * Lazy load the resource manager
+	 * 
+	 * @return The resource manager, create one if necessary
+	 */
+	private ResourceManager getResourceManager() {
+		if (resourceManager == null) {
+			resourceManager = new LocalResourceManager(JFaceResources.getResources());
+		}
+		return resourceManager;
+	}
+
+	/**
+	 * Listener that tracks changes to the editor registry and does a full
+	 * update when it changes, since many workbench adapters derive their icon
+	 * from the file associations in the registry.
+	 */
+	private IPropertyListener editorRegistryListener = new IPropertyListener() {
+		public void propertyChanged(Object source, int propId) {
+			if (propId == IEditorRegistry.PROP_CONTENTS) {
+				fireLabelProviderChanged(new LabelProviderChangedEvent(TitleLabelProvider.this));
+			}
+		}
+	};
+}
